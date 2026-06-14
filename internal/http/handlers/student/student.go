@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/MaringantiYashwanth/students-api/internal/storage"
 	"github.com/MaringantiYashwanth/students-api/internal/types"
@@ -123,6 +124,29 @@ func UpdateById(storage storage.Storage) http.HandlerFunc {
 
 		response.WriteJson(w, http.StatusOK, map[string]string{
 			"message": "Student updated successfully",
+		})
+	}
+}
+
+func DeleteById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Delete the student by id")
+		id := r.PathValue("id")
+		idInt, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+		err = storage.DeleteStudentById(idInt)
+		if err != nil {
+			if strings.Contains(err.Error(), "no student found") {
+				response.WriteJson(w, http.StatusNotFound, response.GeneralError(err))
+			}
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+		response.WriteJson(w, http.StatusOK, map[string]string{
+			"message": "Student deleted successfully",
 		})
 	}
 }
